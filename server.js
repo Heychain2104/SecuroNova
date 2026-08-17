@@ -1,29 +1,60 @@
-require('dotenv').config();
-
 const express = require('express');
 
 const app = express();
 
-const PORT = process.env.PORT || 3001;
+const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
+const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
+
+const REDIRECT_URI =
+    'https://securo-nova.vercel.app/auth/discord/callback';
+
 
 app.get('/', (req, res) => {
     res.send('SecuroNova OAuth backend online.');
 });
 
-app.get('/auth/discord/callback', (req, res) => {
+
+/*
+==========================================
+INICIAR LOGIN CON DISCORD
+==========================================
+*/
+
+app.get('/auth/discord', (req, res) => {
+
+    const discordURL =
+        'https://discord.com/oauth2/authorize' +
+        `?client_id=${CLIENT_ID}` +
+        '&response_type=code' +
+        `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+        '&scope=identify';
+
+    res.redirect(discordURL);
+});
+
+
+/*
+==========================================
+CALLBACK DE DISCORD
+==========================================
+*/
+
+app.get('/auth/discord/callback', async (req, res) => {
 
     const code = req.query.code;
 
     if (!code) {
-        return res.status(400).send('❌ No se recibió ningún código de Discord.');
+        return res.status(400).send(
+            '❌ No se recibió ningún código de Discord.'
+        );
     }
 
     console.log('🔐 Código OAuth recibido correctamente.');
 
-    res.send('✅ Autorización de Discord recibida. Puedes cerrar esta ventana.');
-
+    res.send(
+        '✅ Autorización de Discord recibida. Puedes cerrar esta ventana.'
+    );
 });
 
-app.listen(PORT, () => {
-    console.log(`🌐 SecuroNova OAuth backend funcionando en el puerto ${PORT}`);
-});
+
+module.exports = app;
