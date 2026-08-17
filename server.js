@@ -49,11 +49,64 @@ app.get('/auth/discord/callback', async (req, res) => {
         );
     }
 
-    console.log('🔐 Código OAuth recibido correctamente.');
+    try {
 
-    res.send(
-        '✅ Autorización de Discord recibida. Puedes cerrar esta ventana.'
-    );
+        // Intercambiar el código por un access token
+        const tokenResponse = await fetch(
+            'https://discord.com/api/oauth2/token',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    client_id: CLIENT_ID,
+                    client_secret: CLIENT_SECRET,
+                    grant_type: 'authorization_code',
+                    code: code,
+                    redirect_uri: REDIRECT_URI
+                })
+            }
+        );
+
+        const tokenData = await tokenResponse.json();
+
+        if (!tokenResponse.ok) {
+            console.error(tokenData);
+
+            return res.status(400).send(
+                '❌ Discord rechazó la autorización.'
+            );
+        }
+
+        // Obtener información del usuario
+        const userResponse = await fetch(
+            'https://discord.com/api/users/@me',
+            {
+                headers: {
+                    Authorization: `Bearer ${tokenData.access_token}`
+                }
+            }
+        );
+
+        const user = await userResponse.json();
+
+        console.log(
+            `👤 Usuario autenticado: ${user.username}`
+        );
+
+        res.send(
+            `✅ ¡Bienvenido a SecuroNova, ${user.username}!`
+        );
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).send(
+            '❌ Error interno durante la autenticación.'
+        );
+    }
 });
 
 
